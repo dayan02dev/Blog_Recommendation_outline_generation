@@ -18,6 +18,9 @@ An AI-powered application for generating high-quality blog post topics and outli
 - **Structured Outline Generation**: Create comprehensive blog outlines with sections, key points, and calls-to-action
 - **Export Options**: Download outlines as markdown or JSON files for easy integration with your content workflow
 - **User-friendly Interface**: Simple Streamlit-based UI for rapid interaction with the AI system
+- **Detailed Logging**: Comprehensive logging system for tracking agent performance and troubleshooting
+- **Clean UI**: Clearly separated content areas with borders and organized export options
+- **Reset Functionality**: Easy way to clear all generated content and start over
 
 ## 🏗️ Architecture
 
@@ -45,6 +48,7 @@ This application uses a modular, agent-based architecture powered by LangGraph:
 - **LangChain**: Manages prompt templates and LLM interactions
 - **Streamlit**: Provides the user interface
 - **OpenRouter**: Connects to various LLM APIs (Claude, GPT-4, etc.)
+- **Logging System**: Comprehensive logging for debugging and performance monitoring
 
 ## 📋 Setup Instructions
 
@@ -122,11 +126,34 @@ The application will be available at `http://localhost:8501` in your web browser
    - Download your outline in Markdown format (ready for writing)
    - Or download in JSON format (for programmatic use)
 
+7. **Start Over**:
+   - Click the "Clear All" button in the top-right to reset the application
+
+## 📊 Logging System
+
+The application includes a comprehensive logging system for debugging and monitoring:
+
+- **Log Format**: Each log entry includes timestamp, source module, level, and message
+- **Log Levels**: 
+  - INFO: Normal operation events
+  - WARNING: Potential issues that don't stop execution
+  - ERROR: Serious issues that affect functionality
+  - DEBUG: Detailed information for troubleshooting
+
+- **Log Location**: Logs are output to the console by default
+- **What's Logged**: 
+  - API calls and responses
+  - Token usage statistics
+  - Agent operations and transitions
+  - Response parsing attempts
+  - Error details with tracebacks
+
 ## 🔧 Troubleshooting
 
 - **API Key Issues**: Ensure your OpenRouter API key is correctly set in the `.env` file
 - **Model Errors**: If you encounter errors, try changing the model in your `.env` file
 - **Dependency Issues**: Make sure all required packages are installed with the correct versions
+- **Check Logs**: Use the logging information to identify where issues are occurring
 
 ## 🗂️ Project Structure
 
@@ -175,10 +202,47 @@ Supported models depend on your OpenRouter subscription and may include:
 
 Modify `app.py` to change the Streamlit interface, add new features, or adjust the layout.
 
+### Logging Configuration
 
-```markdown
-[![Agentic Blog Planner Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/wNNWaEpAj2c)
+Adjust the logging configuration in each file to change log levels or output destinations:
+
+```python
+# Change logging level
+logging.basicConfig(level=logging.DEBUG)  # More detailed logs
+
+# Log to file instead of console
+logging.basicConfig(filename='app.log', level=logging.INFO)
 ```
+
+## 🧪 Testing
+
+The application includes unit tests to verify the core functionality of the agents:
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m unittest test_agents.py
+
+# Run specific test class
+python -m unittest test_agents.TestTopicAgent
+
+# Run with verbose output
+python -m unittest -v test_agents.py
+```
+
+### Test Coverage
+
+The tests cover:
+- Topic ideation agent functionality
+- Outline generation agent functionality
+- Error handling for both agents
+- Validation of agent outputs
+
+When contributing new features, please add appropriate tests to maintain code quality.
+
+[![Agentic Blog Planner Demo](https://img.youtube.com/vi/wNNWaEpAj2c/0.jpg)](https://youtu.be/wNNWaEpAj2c)
+
 https://github.com/dayan02dev/Blog_Recommendation_outline_generation
 
 
