@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Remove default :root variables and body styles */
+/* Keep only Tailwind directives */
