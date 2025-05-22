@@ -5,11 +5,16 @@ Uses LangChain and LangGraph to orchestrate a series of LLM-powered agents.
 import streamlit as st
 import json
 from typing import List, Dict, Any
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from states import TopicIdeationState, OutlineGenerationState
 from config import DEFAULT_NUM_TOPICS, DEFAULT_AUDIENCE
 from agents import create_topic_ideation_graph, create_outline_generation_graph
 
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Initialize app state
 def init_session_state():
@@ -32,9 +37,80 @@ def init_session_state():
         st.session_state.outline_error = None
 
 
-# Function to generate topics
-def generate_topics():
-    """Generate topic ideas based on the theme."""
+# API endpoint for topic ideation
+@app.route('/api/topics', methods=['POST'])
+def api_generate_topics():
+    data = request.get_json()
+    if not data or 'theme' not in data:
+        return jsonify({"error": "Theme is required"}), 400
+
+    theme = data['theme']
+    num_topics = data.get('num_topics', DEFAULT_NUM_TOPICS)
+
+    # Create topic ideation graph
+    topic_graph = create_topic_ideation_graph()
+
+    # Prepare input state
+    inputs = TopicIdeationState(
+        original_theme=theme,
+        num_suggestions=num_topics
+    )
+
+    try:
+        # Execute the graph
+        result = topic_graph.invoke(inputs)
+        generated_topics = result.get("generated_topics", [])
+        error_message = result.get("error_message")
+
+        if error_message:
+            return jsonify({"error": error_message}), 500
+        
+        return jsonify({"generated_topics": generated_topics})
+
+    except Exception as e:
+        return jsonify({"error": f"Error generating topics: {str(e)}"}), 500
+
+
+# API endpoint for outline generation
+@app.route('/api/outline', methods=['POST'])
+def api_generate_outline():
+    data = request.get_json()
+    if not data or 'selected_topic' not in data or 'target_audience' not in data:
+        return jsonify({"error": "Selected topic and target audience are required"}), 400
+
+    selected_topic = data['selected_topic']
+    target_audience = data['target_audience']
+
+    # Create outline generation graph
+    outline_graph = create_outline_generation_graph()
+
+    # Prepare input state
+    inputs = OutlineGenerationState(
+        selected_topic=selected_topic,
+        target_audience=target_audience
+    )
+
+    try:
+        # Execute the graph
+        result = outline_graph.invoke(inputs)
+        generated_outline = result.get("generated_outline")
+        error_message = result.get("error_message")
+
+        if error_message:
+            return jsonify({"error": error_message}), 500
+        
+        if not generated_outline:
+             return jsonify({"error": "Outline generation failed to produce an outline."}), 500
+
+        return jsonify({"generated_outline": generated_outline})
+
+    except Exception as e:
+        return jsonify({"error": f"Error generating outline: {str(e)}"}), 500
+
+
+# Function to generate topics (Streamlit)
+def generate_topics_streamlit():
+    """Generate topic ideas based on the theme for Streamlit."""
     st.session_state.topic_error = None
     
     # Create topic ideation graph
@@ -60,9 +136,9 @@ def generate_topics():
             st.session_state.generated_topics = []
 
 
-# Function to generate outline
-def generate_outline():
-    """Generate blog post outline for the selected topic."""
+# Function to generate outline (Streamlit)
+def generate_outline_streamlit():
+    """Generate blog post outline for the selected topic for Streamlit."""
     st.session_state.outline_error = None
     
     # Create outline generation graph
@@ -159,7 +235,7 @@ def main():
         # Generate topics button
         st.button(
             "Generate Topic Ideas", 
-            on_click=generate_topics,
+            on_click=generate_topics_streamlit, # Changed to Streamlit specific function
             disabled=not st.session_state.theme,
             help="Click to generate new topic ideas based on your theme"
         )
@@ -183,7 +259,7 @@ def main():
                 if st.button(f"Select Topic {i}", key=f"select_{i}"):
                     st.session_state.selected_topic = topic
                     # Clear previous outline when selecting a new topic
-                    st.session_state.generated_outline = None
+                st.session_state.generated_outline = None # type: ignore
         else:
             st.info("Enter a theme and click 'Generate Topic Ideas' to get started.")
     
@@ -198,7 +274,7 @@ def main():
             
             # Generate outline button
             if st.button("Generate Outline", key="generate_outline"):
-                generate_outline()
+                generate_outline_streamlit() # Changed to Streamlit specific function
         
         # Error message if any
         if st.session_state.outline_error:
@@ -227,4 +303,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    # Note: This will run the Streamlit app.
+    # To run the Flask API, you would typically use `flask run` or a WSGI server.
+    # For development, you might run Flask in a separate terminal:
+    # FLASK_APP=app.py flask run
+    main()
